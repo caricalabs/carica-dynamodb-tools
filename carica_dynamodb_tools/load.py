@@ -1,19 +1,20 @@
 import json
-import random
-
-import boto3
-import click
 import multiprocessing
+import random
 import sys
 import time
+from multiprocessing.queues import Queue
+
+import click
 from botocore.exceptions import ClientError
 from click import BadParameter
-from multiprocessing.queues import Queue
 
 import carica_dynamodb_tools.version
 import carica_dynamodb_tools.version
 
 # DynamoDB API limit
+from carica_dynamodb_tools.session import boto_session
+
 BATCH_MAX_ITEMS = 25
 
 # Initial retry delay in milliseconds
@@ -51,7 +52,7 @@ def batch_worker(
 
     Quits when it reads a ``None`` from the queue.
     """
-    session = boto3.session.Session(region_name=region)
+    session = boto_session(region_name=region)
     client = session.client('dynamodb')
     for batch in iter(batch_q.get, None):
         request_items = [{'PutRequest': {'Item': item}} for item in batch]

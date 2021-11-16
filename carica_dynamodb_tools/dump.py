@@ -1,11 +1,11 @@
 import json
 import sys
 
-import boto3
 import click
 
 import carica_dynamodb_tools.version
 import carica_dynamodb_tools.version
+from carica_dynamodb_tools.session import boto_session
 
 
 def remove_protected_attrs(item: dict) -> dict:
@@ -26,7 +26,8 @@ def cli(region, table):
     """
     Dump a DynamoDB table's items to stdout, one JSON item per line.
     """
-    client = boto3.client('dynamodb', region_name=region)
+    session = boto_session(region_name=region)
+    client = session.client('dynamodb')
     paginator = client.get_paginator('scan')
     for page in paginator.paginate(TableName=table):
         for item in page['Items']:

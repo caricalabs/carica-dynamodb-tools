@@ -36,8 +36,14 @@ setup(
     ],
     keywords='dynamodb backup restore archive dump load',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
-    install_requires=['boto3~=1.9.99', 'click~=6.7',],
-    extras_require={'dev': ['check-manifest'], 'test': [],},
+    install_requires=[
+        'boto3>=1.9.99',
+        'click~=8.0',
+    ],
+    extras_require={
+        'dev': ['check-manifest'],
+        'test': [],
+    },
     package_data={},
     entry_points={
         'console_scripts': [
