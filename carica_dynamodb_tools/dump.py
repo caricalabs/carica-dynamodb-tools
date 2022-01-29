@@ -55,7 +55,7 @@ def cli(region: str, table: str, num_threads: str):
     if num_threads < 1:
         raise BadParameter('must be > 0', param_hint='num_threads')
 
-    e = ThreadPoolExecutor()
+    e = ThreadPoolExecutor(max_workers=num_threads)
     for n in range(num_threads):
         e.submit(_parallel_scan_worker, region, table, num_threads, n)
     e.shutdown()
