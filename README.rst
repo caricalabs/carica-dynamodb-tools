@@ -15,5 +15,5 @@ able to run and test it.
 #. The ``console_scripts`` listed in ``setup.py`` are now in your path, so you
    can simply run them like:
 
-   ``carica-dynamodb ...``
+   ``carica-dynamodb-dump ...``
 

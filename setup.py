@@ -34,7 +34,7 @@ setup(
         'License :: OSI Approved :: Apache Software License',
         'Programming Language :: Python :: 3.7',
     ],
-    keywords='dynamodb backup restore archive dump load',
+    keywords='dynamodb backup restore archive dump load statistics',
     packages=find_packages(exclude=['contrib', 'docs', 'tests']),
     install_requires=[
         'boto3>=1.9.99',
@@ -49,6 +49,7 @@ setup(
         'console_scripts': [
             'carica-dynamodb-dump=carica_dynamodb_tools.dump:cli',
             'carica-dynamodb-load=carica_dynamodb_tools.load:cli',
+            'carica-dynamodb-stats=carica_dynamodb_tools.stats:cli',
         ],
     },
 )

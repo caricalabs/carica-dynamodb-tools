@@ -10,11 +10,9 @@ from botocore.exceptions import ClientError
 from click import BadParameter
 
 import carica_dynamodb_tools.version
-import carica_dynamodb_tools.version
-
-# DynamoDB API limit
 from carica_dynamodb_tools.session import boto_session
 
+# DynamoDB API limit
 BATCH_MAX_ITEMS = 25
 
 # Initial retry delay in milliseconds
@@ -39,13 +37,13 @@ def sleep_for_retry(attempt: int) -> None:
 
 
 def batch_worker(
-    region: str,
-    table: str,
-    batch_q: Queue,
-    print_lock: multiprocessing.Lock,
-    success_total: multiprocessing.Value,
-    failure_total: multiprocessing.Value,
-    retry_total: multiprocessing.Value,
+        region: str,
+        table: str,
+        batch_q: Queue,
+        print_lock: multiprocessing.Lock,
+        success_total: multiprocessing.Value,
+        failure_total: multiprocessing.Value,
+        retry_total: multiprocessing.Value,
 ) -> None:
     """
     Multiprocessing worker for writing batches of items.

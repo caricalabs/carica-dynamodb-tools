@@ -1,0 +1,95 @@
+{
+  "StringAttribute": {
+    "S": "this is a test"
+  },
+  "NumberAttribute": {
+    "N": "123.456"
+  },
+  "SmallestPositiveNumberAttribute": {
+    "N": "1E-130"
+  },
+  "LargestPositiveNumberAttribute": {
+    "N": "9.9999999999999999999999999999999999999E+125"
+  },
+  "SmallestNegativeNumberAttribute": {
+    "N": "-9.9999999999999999999999999999999999999E+125"
+  },
+  "LargestNegativeNumberAttribute": {
+    "N": "-1E-130"
+  },
+  "BinaryAttribute": {
+    "B": "aGVsbG8="
+  },
+  "BooleanAttribute": {
+    "BOOL": true
+  },
+  "NullAttribute": {
+    "NULL": true
+  },
+  "MapAttribute": {
+    "M": {
+      "ListOfNumbers": {
+        "L": [
+          {
+            "N": "1"
+          },
+          {
+            "N": "2"
+          },
+          {
+            "N": "3"
+          }
+        ]
+      },
+      "ListOfStrings": {
+        "L": [
+          {
+            "S": "a"
+          },
+          {
+            "S": "b"
+          },
+          {
+            "S": "c"
+          }
+        ]
+      },
+      "String": {
+        "S": "foo"
+      }
+    }
+  },
+  "ListAttribute": {
+    "L": [
+      {
+        "S": "foo"
+      },
+      {
+        "S": "bar"
+      },
+      {
+        "S": "baz"
+      }
+    ]
+  },
+  "StringSetAttribute": {
+    "SS": [
+      "a",
+      "b",
+      "c"
+    ]
+  },
+  "NumberSetAttribute": {
+    "NS": [
+      1,
+      2,
+      3
+    ]
+  },
+  "BinarySetAttribute": {
+    "BS": [
+      "aGVsbG8=",
+      "d29ybGQ="
+    ]
+  }
+}
