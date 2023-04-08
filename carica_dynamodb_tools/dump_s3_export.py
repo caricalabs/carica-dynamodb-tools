@@ -2,7 +2,7 @@ import gzip
 import json
 import multiprocessing
 from multiprocessing import Queue
-from typing import List, Tuple
+from typing import Tuple
 
 import click
 import sys
@@ -24,9 +24,7 @@ def remove_protected_attrs(item: dict) -> dict:
     return item
 
 
-def get_export_data_items(
-    region: str, export_arn: str
-) -> Tuple[str, List[StreamingBody]]:
+def get_export_data_items(region: str, export_arn: str) -> Tuple[str, StreamingBody]:
     """
     :return: a tuple containing the bucket name and the response body
         to read the data files manifest JSON object
@@ -87,9 +85,11 @@ def batch_worker(
         with gzip.open(resp['Body'], 'rt') as data_item_lines:
             for data_item_line in data_item_lines:
                 # Remove the wrapping "Item" property at the top level
-                item = json.dumps(json.loads(data_item_line)['Item'])
+                item = json.loads(data_item_line)['Item']
+                item = remove_protected_attrs(item)
+                item_json = json.dumps(item)
                 with print_lock:
-                    sys.stdout.write(item)
+                    sys.stdout.write(item_json)
                     sys.stdout.write('\n')
 
 
