@@ -25,6 +25,8 @@ def remove_protected_attrs(item: dict) -> dict:
 def cli(region, table):
     """
     Dump a DynamoDB table's items to stdout, one JSON item per line.
+
+    Protected attributes (those starting with "aws:") are not included in output.
     """
     session = boto_session(region_name=region)
     client = session.client('dynamodb')
