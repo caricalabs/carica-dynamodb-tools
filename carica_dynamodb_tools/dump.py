@@ -1,21 +1,12 @@
 import json
-import sys
 
 import click
+import sys
 
 import carica_dynamodb_tools.version
 import carica_dynamodb_tools.version
 from carica_dynamodb_tools.session import boto_session
-
-
-def remove_protected_attrs(item: dict) -> dict:
-    """
-    Remove protected (AWS-only) attributes from a DynamoDB item.
-    """
-    attrs = [attr for attr in item.keys() if attr.startswith('aws:')]
-    for attr in attrs:
-        del item[attr]
-    return item
+from carica_dynamodb_tools.utils import remove_protected_attrs
 
 
 @click.command()

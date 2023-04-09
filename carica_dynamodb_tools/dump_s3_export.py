@@ -12,21 +12,14 @@ from click import BadParameter
 import carica_dynamodb_tools.version
 import carica_dynamodb_tools.version
 from carica_dynamodb_tools.session import boto_session
+from carica_dynamodb_tools.utils import remove_protected_attrs
 
 
-def remove_protected_attrs(item: dict) -> dict:
+def get_export_data_items(
+    region: str, export_arn: str
+) -> Tuple[str, int, StreamingBody]:
     """
-    Remove protected (AWS-only) attributes from a DynamoDB item.
-    """
-    attrs = [attr for attr in item.keys() if attr.startswith('aws:')]
-    for attr in attrs:
-        del item[attr]
-    return item
-
-
-def get_export_data_items(region: str, export_arn: str) -> Tuple[str, StreamingBody]:
-    """
-    :return: a tuple containing the bucket name and the response body
+    :return: a tuple containing the bucket name, item count, and the response body
         to read the data files manifest JSON object
     """
     session = boto_session(region_name=region)
@@ -48,12 +41,13 @@ def get_export_data_items(region: str, export_arn: str) -> Tuple[str, StreamingB
     # Download the small export manifest JSON file
     resp = s3_client.get_object(Bucket=bucket, Key=f'{prefix}{manifest_key}')
     manifest = json.loads(resp['Body'].read())
+    item_count = manifest['itemCount']
     manifest_files_key = manifest['manifestFilesS3Key']
 
     # Open the data items manifest JSON file, but return the response so the caller
     # can stream lines out of it.
     resp = s3_client.get_object(Bucket=bucket, Key=manifest_files_key)
-    return bucket, resp['Body']
+    return bucket, item_count, resp['Body']
 
 
 def batch_worker(
@@ -61,6 +55,8 @@ def batch_worker(
     bucket: str,
     item_q: Queue,
     print_lock: multiprocessing.Lock,
+    item_total: multiprocessing.Value,
+    error_total: multiprocessing.Value,
 ) -> None:
     """
     Multiprocessing worker for dumping JSONL archives in S3.
@@ -70,27 +66,36 @@ def batch_worker(
     session = boto_session(region_name=region)
     s3_client = session.client('s3')
     for manifest_item in iter(item_q.get, None):
-        # The item is the contents of one manifestFilesS3Key file.  It looks like:
+        # The manifest item is the contents of one manifestFilesS3Key file.  It looks like:
         # {
         #   'dataFileS3Key': 'AWSDynamoDB/01680958677849-381aef7c/data/s3rcacg63a6lfieybvp7dw357y.json.gz',
         #   'etag': 'ba00d841bd1eec340400e8d62c778aa3-1',
         #   'itemCount': 5344,
         #   'md5Checksum': 'R66Q93z6mjqdBW/mkgj0/A==',
         # }
-        resp = s3_client.get_object(
-            Bucket=bucket,
-            Key=manifest_item['dataFileS3Key'],
-            IfMatch=manifest_item['etag'],
-        )
-        with gzip.open(resp['Body'], 'rt') as data_item_lines:
-            for data_item_line in data_item_lines:
-                # Remove the wrapping "Item" property at the top level
-                item = json.loads(data_item_line)['Item']
-                item = remove_protected_attrs(item)
-                item_json = json.dumps(item)
-                with print_lock:
-                    sys.stdout.write(item_json)
-                    sys.stdout.write('\n')
+        key = manifest_item['dataFileS3Key']
+        etag = manifest_item['etag']
+        try:
+            resp = s3_client.get_object(Bucket=bucket, Key=key, IfMatch=etag)
+            with gzip.open(resp['Body'], 'rt') as data_item_lines:
+                for data_item_line in data_item_lines:
+                    # Remove the wrapping "Item" property at the top level
+                    item = json.loads(data_item_line)['Item']
+                    item = remove_protected_attrs(item)
+                    item_json = json.dumps(item)
+                    with print_lock:
+                        sys.stdout.write(item_json)
+                        sys.stdout.write('\n')
+                    with item_total.get_lock():
+                        item_total.value += 1
+        except Exception as e:
+            with error_total.get_lock():
+                error_total.value += 1
+            with print_lock:
+                print(
+                    f'Error getting s3://{bucket}/{key.lstrip("/")} etag={etag}: {e}',
+                    file=sys.stderr,
+                )
 
 
 @click.command()
@@ -119,16 +124,23 @@ def cli(region: str, procs: int, export_arn: str):
     if num_procs < 1:
         raise BadParameter('must be > 0', param_hint='procs')
 
-    bucket, data_manifest_response = get_export_data_items(region, export_arn)
+    bucket, item_count, data_manifest_response = get_export_data_items(
+        region, export_arn
+    )
 
     # Limiting the queue size puts backpressure on the producer.
     manifest_item_q = multiprocessing.Queue(maxsize=num_procs * 10)
+    item_total = multiprocessing.Value('i')
+    error_total = multiprocessing.Value('i')
+
     print_lock = multiprocessing.Lock()
     proc_args = (
         region,
         bucket,
         manifest_item_q,
         print_lock,
+        item_total,
+        error_total,
     )
     procs = [
         multiprocessing.Process(target=batch_worker, args=proc_args)
@@ -148,6 +160,19 @@ def cli(region: str, procs: int, export_arn: str):
 
     for p in procs:
         p.join()
+
+    error = False
+    if item_total.value != item_count:
+        print(
+            f'Expected {item_count} items; {item_total.value} items in backup',
+            file=sys.stderr,
+        )
+        error = True
+    if error_total.value > 0:
+        print(f'{error_total.value} errors getting item data', file=sys.stderr)
+        error = True
+    if error:
+        sys.exit(1)
 
 
 if __name__ == '__main__':
