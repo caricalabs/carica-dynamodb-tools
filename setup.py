@@ -50,6 +50,7 @@ setup(
             'carica-dynamodb-dump=carica_dynamodb_tools.dump:cli',
             'carica-dynamodb-dump-s3-export=carica_dynamodb_tools.dump_s3_export:cli',
             'carica-dynamodb-load=carica_dynamodb_tools.load:cli',
+            'carica-dynamodb-s3-export=carica_dynamodb_tools.s3_export:cli',
         ],
     },
 )

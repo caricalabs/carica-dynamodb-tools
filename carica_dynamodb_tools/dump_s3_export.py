@@ -30,8 +30,9 @@ def get_export_data_items(
     if desc['ExportFormat'] != 'DYNAMODB_JSON':
         print(f'ExportFormat is not DYNAMODB_JSON', file=sys.stderr)
         sys.exit(1)
-    if desc['ExportStatus'] != 'COMPLETED':
-        print(f'ExportStatus is not COMPLETED', file=sys.stderr)
+    export_status = desc['ExportStatus']
+    if export_status != 'COMPLETED':
+        print(f'ExportStatus is {export_status}', file=sys.stderr)
         sys.exit(1)
 
     bucket = desc['S3Bucket']
