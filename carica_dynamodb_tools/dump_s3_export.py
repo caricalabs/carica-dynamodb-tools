@@ -1,10 +1,10 @@
 import gzip
-import json
 import multiprocessing
 from multiprocessing import Queue
 from typing import Tuple
 
 import click
+import orjson
 import sys
 from botocore.response import StreamingBody
 from click import BadParameter
@@ -41,7 +41,7 @@ def get_export_data_items(
 
     # Download the small export manifest JSON file
     resp = s3_client.get_object(Bucket=bucket, Key=f'{prefix}{manifest_key}')
-    manifest = json.loads(resp['Body'].read())
+    manifest = orjson.loads(resp['Body'].read())
     item_count = manifest['itemCount']
     manifest_files_key = manifest['manifestFilesS3Key']
 
@@ -81,12 +81,12 @@ def batch_worker(
             with gzip.open(resp['Body'], 'rt') as data_item_lines:
                 for data_item_line in data_item_lines:
                     # Remove the wrapping "Item" property at the top level
-                    item = json.loads(data_item_line)['Item']
+                    item = orjson.loads(data_item_line)['Item']
                     item = remove_protected_attrs(item)
-                    item_json = json.dumps(item)
+                    item_json = orjson.dumps(item)
                     with print_lock:
-                        sys.stdout.write(item_json)
-                        sys.stdout.write('\n')
+                        sys.stdout.buffer.write(item_json)
+                        sys.stdout.buffer.write(b'\n')
                     with item_total.get_lock():
                         item_total.value += 1
         except Exception as e:
@@ -154,7 +154,7 @@ def cli(region: str, procs: int, export_arn: str):
     # Read manifest items, putting one decoded item into the queue at a time.
     # Put blocks when the queue is full.
     for line in data_manifest_response.iter_lines():
-        manifest_item_q.put(json.loads(line))
+        manifest_item_q.put(orjson.loads(line))
 
     for _ in procs:
         manifest_item_q.put(None)

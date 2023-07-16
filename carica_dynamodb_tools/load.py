@@ -1,11 +1,11 @@
-import json
 import multiprocessing
 import random
-import sys
-import time
 from multiprocessing.queues import Queue
 
 import click
+import orjson
+import sys
+import time
 from botocore.exceptions import ClientError
 from click import BadParameter
 
@@ -145,7 +145,7 @@ def cli(region: str, procs: str, report: bool, table: str):
     while True:
         line = sys.stdin.readline()
         if line:
-            batch.append(json.loads(line))
+            batch.append(orjson.loads(line))
 
         # Send the batch to the worker when it's full or stdin is closed.
         # We don't worry about checking for total batch size here (in
@@ -171,7 +171,7 @@ def cli(region: str, procs: str, report: bool, table: str):
                 'failed': failure_total.value,
                 'retried': retry_total.value,
             }
-        print(json.dumps(report))
+        sys.stdout.buffer.write(orjson.dumps(report))
 
 
 if __name__ == '__main__':

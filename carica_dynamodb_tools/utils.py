@@ -6,4 +6,3 @@ def remove_protected_attrs(item: dict) -> dict:
     for attr in attrs:
         del item[attr]
     return item
-

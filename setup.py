@@ -39,6 +39,7 @@ setup(
     install_requires=[
         'boto3>=1.9.99',
         'click~=8.0',
+        'orjson~=3.9.2',
     ],
     extras_require={
         'dev': ['check-manifest'],

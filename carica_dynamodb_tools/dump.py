@@ -1,6 +1,5 @@
-import json
-
 import click
+import orjson
 import sys
 
 import carica_dynamodb_tools.version
@@ -25,8 +24,8 @@ def cli(region, table):
     for page in paginator.paginate(TableName=table):
         for item in page['Items']:
             item = remove_protected_attrs(item)
-            json.dump(item, sys.stdout)
-            sys.stdout.write('\n')
+            sys.stdout.buffer.write(orjson.dumps(item))
+            sys.stdout.buffer.write(b'\n')
 
 
 if __name__ == '__main__':
