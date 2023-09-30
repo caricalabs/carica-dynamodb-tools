@@ -85,8 +85,13 @@ def batch_worker(
                     item = remove_protected_attrs(item)
                     item_json = orjson.dumps(item)
                     with print_lock:
-                        sys.stdout.buffer.write(item_json)
-                        sys.stdout.buffer.write(b'\n')
+                        # Appending the newline and calling write one time, instead of
+                        # writing the newline with a second call, prevents an apparent
+                        # race where the underlying output doesn't stay consistent when
+                        # multiple threads write to it quickly, even with print_lock.
+                        # The effect of that condition is extra or misplaced newlines
+                        # in the output, which we don't want.
+                        sys.stdout.buffer.write(item_json + b'\n')
                     with item_total.get_lock():
                         item_total.value += 1
         except Exception as e:

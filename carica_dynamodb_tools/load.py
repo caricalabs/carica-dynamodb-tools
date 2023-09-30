@@ -144,6 +144,11 @@ def cli(region: str, procs: str, report: bool, table: str):
     batch = []
     while True:
         line = sys.stdin.readline()
+
+        # Squash empty lines (a newline char) into empty strings
+        if line:
+            line = line.strip()
+
         if line:
             batch.append(orjson.loads(line))
 
