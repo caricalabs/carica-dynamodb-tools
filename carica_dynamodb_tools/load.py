@@ -145,12 +145,11 @@ def cli(region: str, procs: str, report: bool, table: str):
     while True:
         line = sys.stdin.readline()
 
-        # Squash empty lines (a newline char) into empty strings
         if line:
-            line = line.strip()
-
-        if line:
-            batch.append(orjson.loads(line))
+            # Strip newlines so we can ignore empty lines
+            stripped_line = line.strip()
+            if stripped_line:
+                batch.append(orjson.loads(stripped_line))
 
         # Send the batch to the worker when it's full or stdin is closed.
         # We don't worry about checking for total batch size here (in
